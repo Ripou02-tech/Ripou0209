@@ -45,7 +45,7 @@ background-image:linear-gradient(135deg,#4a1212,#160a0a)}
 .sl input{flex:1;accent-color:#ff3b3b}
 .pv{margin-top:18px;border:2px solid var(--gd);border-radius:26px;background:#000;min-height:110px;display:flex;align-items:center;justify-content:center;padding:18px;overflow-x:auto;direction:ltr}
 .pv>div{white-space:nowrap;font-size:40px;line-height:1.5}
-.l{display:inline-block;border-bottom:5px solid}
+.l{display:inline-block;border-bottom:5px solid transparent}
 .l span{display:inline-block;white-space:pre}
 #out{margin-top:14px;border:2px dashed var(--g);border-radius:26px;padding:20px 16px;direction:ltr;text-align:left;font-family:ui-monospace,Menlo,monospace;font-size:19px;white-space:nowrap;overflow-x:auto;cursor:pointer;background:#050504}
 .hint{text-align:center;color:var(--mut);margin-top:12px;font-size:15px}
@@ -173,15 +173,14 @@ function build(){
     return{ch:x,col:col.toUpperCase(),p};
   });
 }
-function mk(r,box){box.innerHTML="";r.forEach(o=>{const l=document.createElement("span");l.className="l";l.style.borderColor=o.col;
-  const s=document.createElement("span");s.textContent=o.ch;s.style.color=o.col;
+function mk(r,box,tg){tg=tg||[];box.innerHTML="";r.forEach(o=>{const l=document.createElement("span");l.className="l";if(tg.includes("u"))l.style.borderColor=o.col;
+  const s=document.createElement("span");s.textContent=o.ch;s.style.color=o.col;if(tg.includes("s"))s.style.textDecoration="line-through";
+  if(tg.includes("b"))s.style.fontWeight="700";if(tg.includes("i"))s.style.fontStyle="italic";
   if(o.p){s.style.fontSize="65%";s.style.transform="translateY("+(o.p>0?"-.4em":".25em")+")"}
   l.appendChild(s);box.appendChild(l)})}
 function codeOf(r){let pre="";["b","i","c","u","s"].forEach(t=>{if(tags.has(t))pre+="["+t.toUpperCase()+"]"});
   return pre+r.map(o=>o.ch==" "?" ":"["+o.col.slice(1)+"]"+(o.p?(o.p>0?"[sup]"+o.ch+"[/sup]":"[sub]"+o.ch+"[/sub]"):o.ch)).join("")}
-function render(){const r=build();mk(r,$("pv"));
-  const p=$("pv");p.style.fontWeight=tags.has("b")?"700":"400";p.style.fontStyle=tags.has("i")?"italic":"normal";
-  p.style.textDecoration=[tags.has("u")&&"underline",tags.has("s")&&"line-through"].filter(Boolean).join(" ")||"none";
+function render(){const r=build();mk(r,$("pv"),[...tags]);
   $("out").textContent=codeOf(r)}
 function sliders(box,arr,min,max,n){box.innerHTML="";Array.from($("name").value).forEach((c,i)=>{
   const r=document.createElement("div");r.className="r";const b=document.createElement("b");b.textContent=c;
@@ -198,9 +197,9 @@ $("name").oninput=()=>{updUI();render()};
 [1,2,3,4].forEach(i=>$("k"+i).oninput=render);
 $("out").onclick=()=>copy($("out").textContent);
 function persist(){try{localStorage.setItem("rp_h",JSON.stringify(hist))}catch(e){}}
-$("sv").onclick=()=>{hist.unshift({r:build(),code:$("out").textContent});hist=hist.slice(0,30);persist();drawHist();toast(T[L].done)};
+$("sv").onclick=()=>{hist.unshift({r:build(),tg:[...tags],code:$("out").textContent});hist=hist.slice(0,30);persist();drawHist();toast(T[L].done)};
 function drawHist(){const b=$("hl2");b.innerHTML="";if(!hist.length){b.innerHTML='<div class="emp">'+T[L].empty+'</div>';return}
-  hist.forEach((h,i)=>{const d=document.createElement("div");d.className="h";const n=document.createElement("div");n.className="n";mk(h.r,n);n.onclick=()=>copy(h.code);
+  hist.forEach((h,i)=>{const d=document.createElement("div");d.className="h";const n=document.createElement("div");n.className="n";mk(h.r,n,h.tg);n.onclick=()=>copy(h.code);
     const x=document.createElement("button");x.className="x";x.textContent="×";x.onclick=()=>{hist.splice(i,1);persist();drawHist()};d.append(n,x);b.appendChild(d)})}
 $("hb").onclick=()=>{$("modal").style.display="flex"};$("mx").onclick=()=>{$("modal").style.display="none"};
 $("clr").onclick=()=>{hist=[];persist();drawHist()};
